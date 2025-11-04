@@ -202,6 +202,14 @@
     document.getElementById("showFavoritesBtn").addEventListener("click", showFavorites);
 
     loadPDF();
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log('✅ Service Worker registriert:', reg.scope))
+          .catch(err => console.log('❌ Service Worker Fehler:', err));
+      });
+    }
   </script>
 </body>
 </html>
