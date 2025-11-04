@@ -1,13 +1,13 @@
 {
-  "name": "Lesefruechte",
-  "short_name": "LF",
+  "name": "Lesefrüchte",
+  "short_name": "Lesefrüchte",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#111",
-  "theme_color": "#111",
+  "background_color": "#111111",
+  "theme_color": "#111111",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/janniklaswulf/random-pdf-page/main/icon.png",
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
