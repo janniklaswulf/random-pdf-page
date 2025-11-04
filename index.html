@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Random PDF Seite</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Arial;margin:16px;display:flex;flex-direction:column;align-items:center}
+    #viewer{border:1px solid #ccc;width:100%;max-width:900px;height:80vh;display:flex;align-items:center;justify-content:center}
+    canvas{max-width:100%;height:auto}
+    .controls{margin:10px 0;display:flex;gap:8px}
+    button{padding:8px 12px;font-size:16px}
+  </style>
+</head>
+<body>
+  <h1>Random PDF Seite</h1>
+  <div class="controls">
+    <button id="randomBtn">Neue zufällige Seite</button>
+    <button id="infoBtn">Info</button>
+  </div>
+  <div id="viewer">Lade PDF...</div>
+
+  <!-- PDF.js via cdn (keine Installation nötig) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.min.js"></script>
+  <script>
+    // Konfiguration: Name der Datei im selben Ordner wie index.html
+    const PDF_FILE = 'document.pdf'; // ersetze falls nötig
+
+    const viewer = document.getElementById('viewer');
+    const randomBtn = document.getElementById('randomBtn');
+    const infoBtn = document.getElementById('infoBtn');
+
+    let pdfDoc = null;
+
+    // PDF.js Worker Einstellung (über CDN)
+    if(window['pdfjsLib']){
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.worker.min.js';
+    }
+
+    function showMessage(txt){
+      viewer.innerText = txt;
+    }
+
+    async function loadPdf(){
+      try{
+        showMessage('PDF wird geladen...');
+        pdfDoc = await pdfjsLib.getDocument(PDF_FILE).promise;
+        showMessage('PDF geladen: ' + pdfDoc.numPages + ' Seiten');
+        renderRandomPage();
+      }catch(e){
+        console.error(e);
+        showMessage('Fehler beim Laden des PDFs. Stelle sicher, dass document.pdf im selben Ordner liegt und die Datei erreichbar ist.');
+      }
+    }
+
+    async function renderPage(pageNum){
+      try{
+        const page = await pdfDoc.getPage(pageNum);
+        const viewport = page.getViewport({scale: 1.5});
+
+        // Canvas erstellen
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        // leeren viewer und Canvas einfügen
+        viewer.innerHTML = '';
+        viewer.appendChild(canvas);
+
+        // Render-Optionen
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport
+        };
+        await page.render(renderContext).promise;
+      }catch(e){
+        console.error(e);
+        showMessage('Fehler beim Rendern der Seite.');
+      }
+    }
+
+    function renderRandomPage(){
+      if(!pdfDoc){ showMessage('PDF noch nicht geladen.'); return; }
+      const pageNum = Math.floor(Math.random() * pdfDoc.numPages) + 1;
+      renderPage(pageNum);
+    }
+
+    randomBtn.addEventListener('click', renderRandomPage);
+    infoBtn.addEventListener('click', ()=>{
+      if(!pdfDoc){ showMessage('PDF noch nicht geladen.'); return; }
+      alert('PDF Seiten: ' + pdfDoc.numPages + '\nÖffne die Konsole für weitere Infos.');
+    });
+
+    // Start
+    loadPdf();
+  </script>
+</body>
+</html>
