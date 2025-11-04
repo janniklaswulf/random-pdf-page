@@ -1,115 +1,92 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Einfach App – Zufallsseite</title>
-<style>
-  html, body {
-    height: 100%;
-    margin: 0;
-    background-color: #000;
-  }
-  #pdf-viewer {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 60px;
-    width: 100%;
-    height: calc(100% - 60px);
-    border: none;
-  }
-  #controls {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-  }
-  button {
-    font-size: 18px;
-    font-weight: bold;
-    color: white;
-    background: rgba(30,30,30,0.8);
-    border: 2px solid #fff;
-    border-radius: 10px;
-    padding: 10px 20px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  button:hover {
-    background: rgba(255,255,255,0.2);
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zufallsseite aus PDF</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    iframe {
+      flex: 1;
+      width: 100%;
+      border: none;
+    }
+    .controls {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    button {
+      background-color: rgba(255, 255, 255, 0.8);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: rgba(255, 255, 255, 1);
+    }
+  </style>
 </head>
 <body>
+  <iframe id="pdfFrame"></iframe>
 
-<iframe id="pdf-viewer"></iframe>
+  <div class="controls">
+    <button id="prevBtn">⬅️ Eins zurück</button>
+    <button id="nextBtn">➡️ Noch eins</button>
+  </div>
 
-<div id="controls">
-  <button id="prev">⬅️ Eins zurück</button>
-  <button id="next">➡️ Noch eins</button>
-</div>
+  <script>
+    const pdfUrl = "https://raw.githubusercontent.com/janniklaswulf/random-pdf-page/main/document.pdf";
+    const totalPages = 366; // Anzahl Seiten in deiner PDF
+    let history = [1];
+    let currentIndex = 0;
 
-<script>
-const pdfUrl = "https://raw.githubusercontent.com/janniklaswulf/random-pdf-page/main/document.pdf";
-const totalPages = 366; // Gesamtseitenzahl deiner PDF
-let history = [];
-let currentIndex = -1;
+    const pdfFrame = document.getElementById("pdfFrame");
 
-// Zufällige Seite (ohne Seite 1)
-function randomPage() {
-  let available = Array.from({length: totalPages - 1}, (_, i) => i + 2); // 2..366
-  if (history.length > 0) {
-    const last = history[history.length - 1];
-    available = available.filter(p => p !== last);
-  }
-  return available[Math.floor(Math.random() * available.length)];
-}
+    function showPage(page) {
+      pdfFrame.src = pdfUrl + `#page=${page}`;
+    }
 
-// Seite anzeigen
-function showPage(pageNumber) {
-  const viewer = document.getElementById("pdf-viewer");
-  viewer.src = `${pdfUrl}#page=${pageNumber}`;
-}
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      let page;
+      if (currentIndex < history.length - 1) {
+        currentIndex++;
+        page = history[currentIndex];
+      } else {
+        const current = history[currentIndex];
+        const available = Array.from({length: totalPages - 1}, (_, i) => i + 2).filter(p => p !== current);
+        page = available[Math.floor(Math.random() * available.length)];
+        history.push(page);
+        currentIndex++;
+      }
+      showPage(page);
+    });
 
-// Startseite (immer Seite 1)
-function showFirstPage() {
-  history = [1];
-  currentIndex = 0;
-  showPage(1);
-}
+    document.getElementById("prevBtn").addEventListener("click", () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        showPage(history[currentIndex]);
+      } else {
+        showPage(1);
+        alert("Zurück zum Titelbild.");
+      }
+    });
 
-// „Noch eins“ – neue Zufallsseite
-function nextPage() {
-  if (currentIndex < history.length - 1) {
-    currentIndex++;
-  } else {
-    const page = randomPage();
-    history.push(page);
-    currentIndex = history.length - 1;
-  }
-  showPage(history[currentIndex]);
-}
-
-// „Eins zurück“
-function prevPage() {
-  if (currentIndex > 0) {
-    currentIndex--;
-    showPage(history[currentIndex]);
-  } else {
+    // Beim Start Seite 1 anzeigen
     showPage(1);
-  }
-}
-
-// Buttons verbinden
-document.getElementById("next").addEventListener("click", nextPage);
-document.getElementById("prev").addEventListener("click", prevPage);
-
-// Beim Laden: Seite 1 anzeigen
-showFirstPage();
-</script>
+  </script>
 </body>
 </html>
