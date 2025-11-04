@@ -1,6 +1,6 @@
 {
-  "name": "EinfachTool",
-  "short_name": "EinfachTool",
+  "name": "Lesefruechte",
+  "short_name": "LF",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#111",
