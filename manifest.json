@@ -1,0 +1,15 @@
+{
+  "name": "EinfachTool",
+  "short_name": "EinfachTool",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#111",
+  "theme_color": "#111",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/janniklaswulf/random-pdf-page/main/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
