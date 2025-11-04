@@ -53,8 +53,11 @@
   </div>
 
   <!-- Direktes Einbinden der PDF.js-Dateien -->
-  <script src="./pdf.js"></script>
-  <script src="./pdf.worker.js"></script>
+  <script type="module">
+  import * as pdfjsLib from './pdf.mjs';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
+  window.pdfjsLib = pdfjsLib;
+</script>
 
   <script>
     const url = './document.pdf';
