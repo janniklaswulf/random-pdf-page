@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zufällige PDF-Seite</title>
   <style>
     html, body {
@@ -52,7 +52,54 @@
     <button id="next">➡️ Noch eins</button>
   </div>
 
-  <script type="module">
-    import * as pdfjsLib from './pdf.mjs';
+  <!-- Direktes Einbinden der PDF.js-Dateien -->
+  <script src="./pdf.js"></script>
+  <script src="./pdf.worker.js"></script>
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
+  <script>
+    const url = './document.pdf';
+    let pdfDoc = null;
+    const history = [1];
+    const canvas = document.getElementById('pdf-canvas');
+    const ctx = canvas.getContext('2d');
+
+    async function renderPage(num) {
+      const page = await pdfDoc.getPage(num);
+      const viewport = page.getViewport({ scale: 1.5 });
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      await page.render({ canvasContext: ctx, viewport }).promise;
+    }
+
+    async function showPage(num) {
+      await renderPage(num);
+    }
+
+    async function loadPDF() {
+      pdfDoc = await pdfjsLib.getDocument(url).promise;
+      await renderPage(1);
+    }
+
+    document.getElementById('next').addEventListener('click', async () => {
+      const total = pdfDoc.numPages;
+      const available = Array.from({ length: total - 1 }, (_, i) => i + 2);
+      const current = history[history.length - 1];
+      const options = available.filter(p => p !== current);
+      const nextPage = options[Math.floor(Math.random() * options.length)];
+      history.push(nextPage);
+      await renderPage(nextPage);
+    });
+
+    document.getElementById('prev').addEventListener('click', async () => {
+      if (history.length > 1) {
+        history.pop();
+        await renderPage(history[history.length - 1]);
+      } else {
+        await renderPage(1);
+      }
+    });
+
+    loadPDF();
+  </script>
+</body>
+</html>
