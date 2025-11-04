@@ -1,14 +1,25 @@
 {
-  "name": "Lesefrüchte",
-  "short_name": "Lesefrüchte",
+  "name": "Lesefruechte",
+  "short_name": "Lesefruechte",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#111111",
-  "theme_color": "#111111",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "description": "Lesefruechte – entdecke zufällige Seiten deiner Lieblings-PDF offline oder online.",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "lesefruechte-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "lesefruechte-icon.png",
       "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "lesefruechte-icon.png",
+      "sizes": "1024x1024",
       "type": "image/png"
     }
   ]
