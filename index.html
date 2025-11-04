@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zufällige PDF-Seite</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
@@ -59,27 +59,6 @@
     #prev-btn { bottom: 60px; left: 20px; }
     #next-btn { bottom: 60px; right: 20px; }
 
-    /* Favoriten-Buttons */
-    #fav-btn {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: rgba(255, 215, 0, 0.9);
-      font-size: 24px;
-      padding: 8px 14px;
-      border-radius: 50%;
-      z-index: 1000;
-    }
-    #show-favs-btn {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      background: rgba(255,255,255,0.7);
-      font-size: 24px;
-      padding: 8px 14px;
-      border-radius: 50%;
-      z-index: 1000;
-    }
     #favorites-list {
       position: fixed;
       top: 50%;
@@ -112,11 +91,117 @@
 
   <button id="prev-btn" class="btn">⬅️ Eins zurück</button>
   <button id="next-btn" class="btn">➡️ Noch eins</button>
-  <button id="fav-btn">⭐</button>
-  <button id="show-favs-btn">📖</button>
+
+  <!-- ⭐ Favorit speichern -->
+  <button id="favoriteBtn"
+    style="position: fixed; top: 10px; right: 10px;
+           background: rgba(255,215,0,0.9);
+           border: none; border-radius: 50%;
+           font-size: 24px; padding: 8px 12px;
+           cursor: pointer; z-index: 1000;">⭐</button>
+
+  <!-- 📖 Favoriten anzeigen -->
+  <button id="showFavoritesBtn"
+    style="position: fixed; top: 10px; left: 10px;
+           background: rgba(255,255,255,0.7);
+           border: none; border-radius: 50%;
+           font-size: 24px; padding: 8px 12px;
+           cursor: pointer; z-index: 1000;">📖</button>
 
   <div id="favorites-list"></div>
 
   <script>
     const pdfUrl = "https://raw.githubusercontent.com/janniklaswulf/random-pdf-page/main/document.pdf";
-    let pdfDoc =
+    let pdfDoc = null;
+    let currentPage = 1;
+    let totalPages = 0;
+    let history = [1];
+    let currentIndex = 0;
+    let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+
+    const canvas = document.getElementById("pdf-canvas");
+    const ctx = canvas.getContext("2d");
+    const pageInfo = document.getElementById("page-info");
+    const favList = document.getElementById("favorites-list");
+
+    async function loadPDF() {
+      const loadingTask = pdfjsLib.getDocument(pdfUrl);
+      pdfDoc = await loadingTask.promise;
+      totalPages = pdfDoc.numPages;
+      renderPage(1);
+    }
+
+    async function renderPage(num) {
+      const page = await pdfDoc.getPage(num);
+      const viewport = page.getViewport({ scale: 1.5 });
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      currentPage = num;
+      pageInfo.textContent = `Seite ${num} / ${totalPages}`;
+    }
+
+    function nextPage() {
+      if (currentIndex < history.length - 1) {
+        currentIndex++;
+        renderPage(history[currentIndex]);
+      } else {
+        const available = Array.from({length: totalPages - 1}, (_, i) => i + 2);
+        let randomPage;
+        do { randomPage = available[Math.floor(Math.random() * available.length)]; }
+        while (randomPage === history[currentIndex]);
+        history.push(randomPage);
+        currentIndex++;
+        renderPage(randomPage);
+      }
+    }
+
+    function prevPage() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderPage(history[currentIndex]);
+      }
+    }
+
+    function toggleFavorite() {
+      if (!favorites.includes(currentPage)) {
+        favorites.push(currentPage);
+        localStorage.setItem("favorites", JSON.stringify(favorites));
+        alert(`Seite ${currentPage} gespeichert!`);
+      } else {
+        alert(`Seite ${currentPage} ist bereits ein Favorit.`);
+      }
+    }
+
+    function showFavorites() {
+      favList.innerHTML = "";
+      if (favorites.length === 0) {
+        favList.innerHTML = "<p>Keine Favoriten gespeichert</p>";
+      } else {
+        favorites.forEach(page => {
+          const btn = document.createElement("button");
+          btn.textContent = `Seite ${page}`;
+          btn.onclick = () => {
+            renderPage(page);
+            favList.style.display = "none";
+          };
+          favList.appendChild(btn);
+        });
+      }
+      const closeBtn = document.createElement("button");
+      closeBtn.textContent = "Schließen";
+      closeBtn.onclick = () => favList.style.display = "none";
+      favList.appendChild(closeBtn);
+      favList.style.display = "flex";
+    }
+
+    document.getElementById("next-btn").addEventListener("click", nextPage);
+    document.getElementById("prev-btn").addEventListener("click", prevPage);
+    document.getElementById("favoriteBtn").addEventListener("click", toggleFavorite);
+    document.getElementById("showFavoritesBtn").addEventListener("click", showFavorites);
+
+    loadPDF();
+  </script>
+</body>
+</html>
