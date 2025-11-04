@@ -1,126 +1,173 @@
-<script type="module">
-  // Robuster PDF.js-Loader + Rendering (skaliert, sperrt Buttons, Fehlerbehandlung)
-  try {
-    const pdfjs = await import('./pdf.mjs');
-    pdfjs.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
-
-    const url = './document.pdf';
-    let pdfDoc = null;
-    let isRendering = false;
-    let history = [1]; // Verlauf, start mit Seite 1
-    const canvas = document.getElementById('pdf-canvas');
-    const ctx = canvas.getContext('2d');
-
-    // Berechnet sinnvollen Scale, passt an DevicePixelRatio an
-    function calcScale(viewport) {
-      const marginW = window.innerWidth * 0.98;
-      const marginH = (window.innerHeight - 120) * 0.98; // Platz für Buttons
-      const scaleX = marginW / viewport.width;
-      const scaleY = marginH / viewport.height;
-      const baseScale = Math.min(scaleX, scaleY, 2.0); // nicht zu groß
-      const dpr = window.devicePixelRatio || 1;
-      return Math.max(0.6, baseScale) * dpr; // min scale 0.6, multipliziert mit DPR
-    }
-
-    async function renderPage(num) {
-      if (!pdfDoc) throw new Error('PDF noch nicht geladen');
-      isRendering = true;
-      disableButtons(true);
-      try {
-        const page = await pdfDoc.getPage(num);
-        // viewport bei scale=1 holen, dann berechnen
-        const vp1 = page.getViewport({ scale: 1 });
-        const scale = calcScale(vp1);
-        const viewport = page.getViewport({ scale });
-
-        // HiDPI: Canvas pixelgröße multipliziert mit DPR
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = Math.round(viewport.width);
-        canvas.height = Math.round(viewport.height);
-        canvas.style.width = Math.round(viewport.width / dpr) + 'px';
-        canvas.style.height = Math.round(viewport.height / dpr) + 'px';
-
-        // Render mit angepasstem CanvasContext
-        const renderContext = {
-          canvasContext: ctx,
-          viewport: viewport
-        };
-        const renderTask = page.render(renderContext);
-        await renderTask.promise;
-      } finally {
-        isRendering = false;
-        disableButtons(false);
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EinfachTool – Zufällige PDF-Seite</title>
+    <style>
+      body {
+        margin: 0;
+        background: #000;
+        color: white;
+        text-align: center;
+        overflow: hidden;
       }
-    }
-
-    function disableButtons(dis) {
-      document.getElementById('next').disabled = dis;
-      document.getElementById('prev').disabled = dis;
-    }
-
-    async function loadPDF() {
-      try {
-        pdfDoc = await pdfjs.getDocument(url).promise;
-        console.log('PDF geladen, Seiten:', pdfDoc.numPages);
-        await renderPage(1);
-      } catch (e) {
-        console.error('Fehler beim Laden der PDF:', e);
-        alert('Fehler beim Laden der PDF. Siehe Konsole.');
+      #controls {
+        position: fixed;
+        bottom: 20px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        z-index: 10;
       }
-    }
-
-    function nextRandomPage() {
-      const total = pdfDoc.numPages;
-      const current = history[history.length - 1];
-      // verfügbare Seiten 2..total (Seite 1 wird nicht wieder gewählt)
-      const available = Array.from({ length: total - 1 }, (_, i) => i + 2).filter(p => p !== current);
-      if (available.length === 0) return current;
-      // einfache Zufallsauswahl (kann Duplikate erzeugen, OK)
-      return available[Math.floor(Math.random() * available.length)];
-    }
-
-    document.getElementById('next').addEventListener('click', async () => {
-      if (isRendering) return;
-      try {
-        const nextP = nextRandomPage();
-        history.push(nextP);
-        await renderPage(nextP);
-      } catch (e) {
-        console.error('Fehler next:', e);
-        alert('Fehler beim Wechseln der Seite (Konsole prüfen).');
+      button {
+        font-size: 18px;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        background-color: rgba(255, 255, 255, 0.8);
+        color: #000;
+        cursor: pointer;
+        font-weight: bold;
       }
-    });
+      button:hover {
+        background-color: white;
+      }
+      canvas {
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+        height: auto;
+        background: #f0f0f0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="controls">
+      <button id="prev">⬅️ Eins zurück</button>
+      <button id="next">➡️ Noch eins</button>
+    </div>
 
-    document.getElementById('prev').addEventListener('click', async () => {
-      if (isRendering) return;
+    <canvas id="pdf-canvas"></canvas>
+
+    <script type="module">
       try {
-        if (history.length > 1) {
-          history.pop();
-          const prevP = history[history.length - 1];
-          await renderPage(prevP);
-        } else {
-          await renderPage(1);
+        const pdfjs = await import('./pdf.mjs');
+        pdfjs.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
+
+        const url = './document.pdf';
+        let pdfDoc = null;
+        let isRendering = false;
+        let history = [1];
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function calcScale(viewport) {
+          const marginW = window.innerWidth * 0.98;
+          const marginH = (window.innerHeight - 120) * 0.98;
+          const scaleX = marginW / viewport.width;
+          const scaleY = marginH / viewport.height;
+          const baseScale = Math.min(scaleX, scaleY, 2.0);
+          const dpr = window.devicePixelRatio || 1;
+          return Math.max(0.6, baseScale) * dpr;
         }
+
+        async function renderPage(num) {
+          if (!pdfDoc) throw new Error('PDF nicht geladen');
+          isRendering = true;
+          disableButtons(true);
+          try {
+            const page = await pdfDoc.getPage(num);
+            const vp1 = page.getViewport({ scale: 1 });
+            const scale = calcScale(vp1);
+            const viewport = page.getViewport({ scale });
+
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.round(viewport.width);
+            canvas.height = Math.round(viewport.height);
+            canvas.style.width = Math.round(viewport.width / dpr) + 'px';
+            canvas.style.height = Math.round(viewport.height / dpr) + 'px';
+
+            const renderContext = {
+              canvasContext: ctx,
+              viewport: viewport
+            };
+            const renderTask = page.render(renderContext);
+            await renderTask.promise;
+          } finally {
+            isRendering = false;
+            disableButtons(false);
+          }
+        }
+
+        function disableButtons(dis) {
+          document.getElementById('next').disabled = dis;
+          document.getElementById('prev').disabled = dis;
+        }
+
+        async function loadPDF() {
+          try {
+            pdfDoc = await pdfjs.getDocument(url).promise;
+            console.log('PDF geladen, Seiten:', pdfDoc.numPages);
+            await renderPage(1);
+          } catch (e) {
+            console.error('Fehler beim Laden der PDF:', e);
+            alert('Fehler beim Laden der PDF. Siehe Konsole.');
+          }
+        }
+
+        function nextRandomPage() {
+          const total = pdfDoc.numPages;
+          const current = history[history.length - 1];
+          const available = Array.from({ length: total - 1 }, (_, i) => i + 2).filter(p => p !== current);
+          if (available.length === 0) return current;
+          return available[Math.floor(Math.random() * available.length)];
+        }
+
+        document.getElementById('next').addEventListener('click', async () => {
+          if (isRendering) return;
+          try {
+            const nextP = nextRandomPage();
+            history.push(nextP);
+            await renderPage(nextP);
+          } catch (e) {
+            console.error('Fehler next:', e);
+            alert('Fehler beim Wechseln der Seite (Konsole prüfen).');
+          }
+        });
+
+        document.getElementById('prev').addEventListener('click', async () => {
+          if (isRendering) return;
+          try {
+            if (history.length > 1) {
+              history.pop();
+              const prevP = history[history.length - 1];
+              await renderPage(prevP);
+            } else {
+              await renderPage(1);
+            }
+          } catch (e) {
+            console.error('Fehler prev:', e);
+            alert('Fehler beim Zurückgehen (Konsole prüfen).');
+          }
+        });
+
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+          if (resizeTimer) clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            const current = history[history.length - 1];
+            if (pdfDoc && !isRendering) renderPage(current).catch(err => console.error(err));
+          }, 250);
+        });
+
+        await loadPDF();
       } catch (e) {
-        console.error('Fehler prev:', e);
-        alert('Fehler beim Zurückgehen (Konsole prüfen).');
+        console.error('Initialisierungsfehler:', e);
+        alert('Initialisierungsfehler (Konsole prüfen).');
       }
-    });
-
-    // Neu rendern bei Fenstergröße (debounced)
-    let resizeTimer = null;
-    window.addEventListener('resize', () => {
-      if (resizeTimer) clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        const current = history[history.length - 1];
-        if (pdfDoc && !isRendering) renderPage(current).catch(err => console.error(err));
-      }, 250);
-    });
-
-    // Start
-    await loadPDF();
-  } catch (e) {
-    console.error('Initialisierungsfehler:', e);
-    alert('Initialisierungsfehler (Konsole prüfen).');
-  }
-</script>
+    </script>
+  </body>
+</html>
