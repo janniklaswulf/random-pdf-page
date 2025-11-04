@@ -1,3 +1,6 @@
+// Version 2 - aktualisiert
+const CACHE_NAME = "einfachtool-cache-v1";
+...
 const CACHE_NAME = "einfachtool-cache-v1";
 const FILES_TO_CACHE = [
   "./",
