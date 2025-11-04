@@ -5,7 +5,7 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
-  "description": "Lesefruechte – entdecke zufällige Seiten deiner Lieblings-PDF offline oder online.",
+  "description": "Lesefruechte.",
   "icons": [
     {
       "src": "lesefruechte-icon.png",
