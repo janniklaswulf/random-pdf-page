@@ -1,6 +1,3 @@
-// Version 2 - aktualisiert
-const CACHE_NAME = "einfachtool-cache-v1";
-...
 const CACHE_NAME = "einfachtool-cache-v1";
 const FILES_TO_CACHE = [
   "./",
@@ -9,19 +6,19 @@ const FILES_TO_CACHE = [
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
 ];
 
-// Installations-Event: Dateien cachen
-self.addEventListener("install", (event) => {
+// Installieren und Dateien cachen
+self.addEventListener("install", function(event) {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
+    caches.open(CACHE_NAME).then(function(cache) {
       return cache.addAll(FILES_TO_CACHE);
     })
   );
 });
 
-// Fetch-Event: Versuche aus Cache, sonst aus dem Netz
-self.addEventListener("fetch", (event) => {
+// Abrufen: erst Cache, dann Netz
+self.addEventListener("fetch", function(event) {
   event.respondWith(
-    caches.match(event.request).then((response) => {
+    caches.match(event.request).then(function(response) {
       return response || fetch(event.request);
     })
   );
