@@ -185,40 +185,30 @@
       }
     }
 
-    function showFavorites() {
+   function showFavorites() {
   favList.innerHTML = "";
   if (favorites.length === 0) {
     favList.innerHTML = "<p>Keine Favoriten gespeichert</p>";
   } else {
-    favorites.forEach((page, index) => {
-      const container = document.createElement("div");
-      container.style.display = "flex";
-      container.style.alignItems = "center";
-      container.style.margin = "5px";
-
-      // Button zum Springen auf die Seite
+    favorites.forEach(page => {
       const btn = document.createElement("button");
       btn.textContent = `Seite ${page}`;
-      btn.style.marginRight = "8px";
       btn.onclick = () => {
         renderPage(page);
         favList.style.display = "none";
       };
-
-      // Button zum Löschen des Favoriten
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "❌";
-      delBtn.style.background = "rgba(255,0,0,0.8)";
-      delBtn.style.color = "white";
-      delBtn.style.border = "none";
-      delBtn.style.borderRadius = "6px";
-      delBtn.style.padding = "4px 8px";
-      delBtn.style.cursor = "pointer";
-      delBtn.onclick = () => {
-        favorites.splice(index, 1); // Favorit löschen
-        localStorage.setItem("favorites", JSON.stringify(favorites));
-        showFavorites(); // Liste neu rendern
-      };
+      favList.appendChild(btn);
+    });
+  }
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "Schließen";
+  closeBtn.onclick = () => favList.style.display = "none";
+  favList.appendChild(closeBtn);
+  favList.style.display = "flex";
+  favList.style.flexDirection = "column";
+  favList.style.alignItems = "center";
+}
+    
 
       container.appendChild(btn);
       container.appendChild(delBtn);
