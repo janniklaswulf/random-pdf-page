@@ -209,20 +209,6 @@
   favList.style.alignItems = "center";
 }
     
-
-      container.appendChild(btn);
-      container.appendChild(delBtn);
-      favList.appendChild(container);
-    });
-  }
-
-      const closeBtn = document.createElement("button");
-      closeBtn.textContent = "Schließen";
-      closeBtn.onclick = () => favList.style.display = "none";
-      favList.appendChild(closeBtn);
-      favList.style.display = "flex";
-    }
-
     document.getElementById("next-btn").addEventListener("click", nextPage);
     document.getElementById("prev-btn").addEventListener("click", prevPage);
     document.getElementById("favoriteBtn").addEventListener("click", toggleFavorite);
